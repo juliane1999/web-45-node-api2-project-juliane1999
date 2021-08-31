@@ -48,38 +48,52 @@ router.get('/', (req, res) => {
       }
   })
 
-  router.put('/:id', async (req,res)=> {
-    const {id} = req.params
-    const post = req.body
-
-    try{
-    const updatedPost = await Posts.update(id, post)
-            if (!post.title || !post.contents) {
-                res.status(400).json({message: "Please provide title and contents for the post"})
-        } else if (!updatedPost){
-                res.status(404).json({ message: "The post with the specified ID does not exist" })
-            }else {
-            res.status(200).json(post)
+  router.put('/:id', (req,res)=> {
+    const {title, contents} = req.body
+    if(!title || !contents) {
+        res.status(400).json({ message: "Please provide title and contents for the post" })
+    } else {
+        Posts.findById(req.params.id)
+        .then(post => {
+            if(!post) {
+                res.status(404).json({
+                    message: "The post with the specified ID does not exist"})
+            } else {
+                return Posts.update(req.params.id, req.body)
             }
-        }
-    catch (err) {
-        res.status(500).json({ message: "The post information could not be modified" })
+        })
+        .then (data => {
+            if(data) {
+                return Posts.findById(req.params.id)
+            }
+        })
+        .then(post => {
+            if (post) {
+                res.json(post)
+            }
+        })
+        .catch(err => {
+            console.log(err)
+            res.status(500).json({ message: "There was an error while saving the post to the database"})
+        })
     }
-})
- 
-  router.delete('/:id', (req, res) => {
-    Posts.remove(req.params.id)
-      .then(post => {
-        if (post) {
-          res.status(200).json(post)
-        } else {
-          res.status(404).json({ message: "The post with the specified ID does not exist" })
-        }
-      })
-      .catch(err => {
-        console.log(err)
-        res.status(500).json({ message: "The post could not be removed" })
-      })
+    })
+
+  router.delete('/:id', async (req,res) => {
+      try {
+          const post = await Posts.findById(req.params.id)
+          if(!post) {
+            res.status(404).json({
+                message: "The post with the specified ID does not exist" 
+            })
+          } else {
+              await Posts.remove(req.param.id)
+              res.json(post)
+          }
+          } catch (err) {
+              console.log(err)
+              res.status(500).json({ message: "The post information could not be modified" })
+      }
   })
   
   module.exports = router
