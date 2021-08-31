@@ -48,6 +48,24 @@ router.get('/', (req, res) => {
       }
   })
 
+  
+  router.delete('/:id', async (req,res) => {
+    try {
+        const post = await Posts.findById(req.params.id)
+        if(!post) {
+          res.status(404).json({
+              message: "The post with the specified ID does not exist" 
+          })
+        } else {
+            await Posts.remove(req.params.id)
+            res.json(post)
+        }
+        } catch (err) {
+            console.log(err)
+            res.status(500).json({ message: "The post could not be removed" })
+    }
+})
+
   router.put('/:id', (req,res)=> {
     const {title, contents} = req.body
     if(!title || !contents) {
@@ -79,21 +97,5 @@ router.get('/', (req, res) => {
     }
     })
 
-  router.delete('/:id', async (req,res) => {
-      try {
-          const post = await Posts.findById(req.params.id)
-          if(!post) {
-            res.status(404).json({
-                message: "The post with the specified ID does not exist" 
-            })
-          } else {
-              await Posts.remove(req.param.id)
-              res.json(post)
-          }
-          } catch (err) {
-              console.log(err)
-              res.status(500).json({ message: "The post information could not be modified" })
-      }
-  })
   
   module.exports = router
